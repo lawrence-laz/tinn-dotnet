@@ -48,6 +48,7 @@ namespace Tinn
         /// Loads a pretrained neural network from a `*.tinn` file.
         /// </summary>
         /// <param name="path">An absolute or a relative path to the `*.tinn` file.</param>
+        /// <param name="seed">A seed for random generator to produce predictable results.</param>
         /// <returns>An instance of a pretrained <see cref="TinyNeuralNetwork"/>.</returns>
         public static TinyNeuralNetwork Load(string path, int seed = default)
         {

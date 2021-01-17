@@ -2,12 +2,31 @@
 
     <PropertyGroup>
         <TargetFramework>netstandard2.0</TargetFramework>
+        <Company>Laurynas Lazauskas</Company>
+        <Authors>Laurynas Lazauskas</Authors>
+        <Product>Tinn</Product>
+        <Description>A tiny neural network library.</Description>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <PackageId>Tinn</PackageId>
+        <PackageProjectUrl>https://github.com/lawrence-laz/tinn-dotnet</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/lawrence-laz/tinn-dotnet</RepositoryUrl>
+        <PackageTags>neural network;ai;machine learning;</PackageTags>
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+        <Copyright>Copyright 2021</Copyright>
+        <Version>1.0.0</Version>
+        <RepositoryType>git</RepositoryType>
+        <PackageIcon>icon.png</PackageIcon>
     </PropertyGroup>
 
     <ItemGroup>
         <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
             <_Parameter1>$(AssemblyName).Tests</_Parameter1>
         </AssemblyAttribute>
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Include="../../image/icon.png" Pack="true" PackagePath=""/>
     </ItemGroup>
 
 </Project>
