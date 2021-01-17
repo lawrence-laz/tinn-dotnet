@@ -53,7 +53,7 @@ namespace Tinn
         {
             var content = File.ReadAllLines(path);
             
-            var counts = content.First().Split(" ").Select(int.Parse).ToArray();
+            var counts = content.First().Split(' ').Select(int.Parse).ToArray();
             var inputCount = counts[0];
             var hiddenCount = counts[1];
             var outputCount = counts[2];
