@@ -16,15 +16,14 @@ float learningRate = 1f;
 const float learningRateDecay = 0.99f;
 
 // Used for shuffling data set in between training iterations.
-static void Shuffle(float[][] input, float[][] output)
+static void Shuffle<T>(T[] array)
 {
     var random = new Random(0);
 
-    for (int i = 0; i < input.Length; i++)
+    for (int i = 0; i < array.Length; i++)
     {
-        var j = random.Next(input.Length);
-        (input[i], input[j]) = (input[j], input[i]);
-        (output[i], output[j]) = (output[j], output[i]);
+        var j = random.Next(array.Length);
+        (array[i], array[j]) = (array[j], array[i]);
     }
 }
 
@@ -61,35 +60,35 @@ var data = File.ReadAllLines(dataSetFileName)
     .Select(number => (
         Input: number.Take(inputCount).ToArray(),
         Output: number.Skip(inputCount).Take(outputCount).ToArray())
-    );
-var input = data.Select(x => x.Input).ToArray();
-var expectedOutput = data.Select(x => x.Output).ToArray();
+    )
+    .ToArray();
 #endregion
 
 #region Train neural network
 var network = new TinyNeuralNetwork(inputCount, hiddentCount, outputCount);
-var progress = new ProgressBar(learningIterations * input.Length, "Training...");
+var progress = new ProgressBar(learningIterations * data.Length, "Training...");
 
 for (var i = 0; i < learningIterations; i++)
 {
-    for (int j = 0; j < input.Length; j++)
+    foreach (var record in data)
     {
         progress.Tick();
-        network.Train(input[j], expectedOutput[j], learningRate);
+        network.Train(record.Input, record.Output, learningRate);
     }
-    Shuffle(input, expectedOutput);
+
+    Shuffle(data);
     learningRate *= learningRateDecay;
 }
 #endregion
 
 #region Test neural network
-var predictedNumbers = input
-    .Select(x => network.Predict(x))
+var predictedNumbers = data
+    .Select(x => network.Predict(x.Input))
     .Select(GetMaxIndex)
     .ToArray();
 
-var actualNumbers = expectedOutput
-    .Select(GetMaxIndex)
+var actualNumbers = data
+    .Select(record => GetMaxIndex(record.Output))
     .ToArray();
 
 var correctlyGuessed = 0;
