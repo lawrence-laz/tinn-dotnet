@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.0] - 2023-07-28
+
 ### Changed
 
 - `TinyNeuralNetwork.Train` no longer calculates or returns error. To get current error values call `TinyNeuralNetwork.GetTotalError` instead.
@@ -25,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Initial `TinyNeuralNetwork` implementation based on [C implementation].
 - Example of a hand written number recognition (MNIST database).
 
-[unreleased]: https://github.com/olivierlacan/keep-a-changelog/compare/v1.0.0...HEAD
-[1.0.0]: https://github.com/olivierlacan/keep-a-changelog/compare/v0.3.0...v1.0.0
+[unreleased]: https://github.com/lawrence-laz/tinn-dotnet/compare/v2.0.0...HEAD
+[2.0.0]: https://github.com/lawrence-laz/tinn-dotnet/compare/v1.0.0...v2.0.0
+[1.0.0]: https://github.com/lawrence-laz/tinn-dotnet/compare/v0.3.0...v1.0.0
 [C implementation]: https://github.com/glouw/tinn
