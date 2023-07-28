@@ -12,7 +12,7 @@ const int outputCount = 10;
 const int verifyCount = 150;
 
 const int learningIterations = 10;
-float learningRate = 0.1f;
+var learningRate = 0.1f;
 const float learningRateDecay = 0.95f;
 var random = new Random(0);
 
@@ -21,71 +21,72 @@ if (File.Exists(dataSetFileName) == false)
     Console.WriteLine("Downloading MNIST dataset...");
     using HttpClient client = new();
     using Stream file = File.Create(dataSetFileName);
-    Stream stream = await client.GetStreamAsync(datasetUri);
+    var stream = await client.GetStreamAsync(datasetUri);
     stream.CopyTo(file);
     Console.WriteLine("Download completed.");
 }
 
-(float[] Input, float[] Output)[] allData = File.ReadAllLines(dataSetFileName)
+var allData = File.ReadAllLines(dataSetFileName)
     .Select(line => line.Split(" ").Select(x => float.Parse(x, CultureInfo.InvariantCulture)))
-    .Select(number => (
+    .Select(number => new DataItem(
         Input: number.Take(inputCount).ToArray(),
         Output: number.Skip(inputCount).Take(outputCount).ToArray())
     )
-    .ToArray();
+    .ToList();
 
-(float[] Input, float[] Output)[] learningData = allData.Skip(verifyCount).ToArray();
-(float[] Input, float[] Output)[] verifyData = allData.Take(verifyCount).ToArray();
+var learningData = allData.Skip(verifyCount).ToList();
+var verifyData = allData.Take(verifyCount).ToList();
 
 var network = new TinyNeuralNetwork(inputCount, hiddenCount, outputCount);
 var progress = new ProgressBar(learningIterations, "Training...");
-
-string currentAccuracy = "";
+var currentAccuracy = 0.0;
 for (var i = 0; i < learningIterations; i++)
 {
-    using ChildProgressBar child = progress.Spawn(learningData.Length, "iteration " + i, new ProgressBarOptions { CollapseWhenFinished = true });
-    foreach ((float[] Input, float[] Output, int n) in learningData.Select(((float[] i, float[] o) data, int n) => (data.i, data.o, n)))
+    using var child = progress.Spawn(
+        learningData.Count,
+        $"Iteration {i}",
+        new ProgressBarOptions { CollapseWhenFinished = true });
+    foreach (var (input, output) in learningData)
     {
-        network.Train(Input, Output, learningRate);
-        if (n == learningData.Length - 1)
-        {
-            currentAccuracy = ComputeAccuracy(verifyData, network);
-        }
-
+        network.Train(input, output, learningRate);
         child.Tick();
     }
 
     Shuffle(learningData);
     learningRate *= learningRateDecay;
-    progress.Tick(currentAccuracy);
+
+    currentAccuracy = ComputeAccuracy(verifyData, network);
+    progress.Tick($"Achieved {currentAccuracy:P2} accuracy.");
+    await Task.Delay(TimeSpan.FromSeconds(0.5));
 }
 
 network.Save("network.tinn");
 currentAccuracy = ComputeAccuracy(verifyData, network);
-Console.WriteLine(currentAccuracy);
+Console.WriteLine($"Achieved {currentAccuracy:P2} accuracy.");
 
-// Used for shuffling data set in between training iterations.
-void Shuffle<T>(T[] array)
+void Shuffle<T>(List<T> list)
 {
-    for (int i = 0; i < array.Length; i++)
+    for (var i = 0; i < list.Count; i++)
     {
-        var j = random.Next(array.Length);
-        (array[i], array[j]) = (array[j], array[i]);
+        var j = random.Next(list.Count);
+        (list[i], list[j]) = (list[j], list[i]);
     }
 }
 
-string ComputeAccuracy((float[] Input, float[] Output)[] subset, TinyNeuralNetwork network)
+double ComputeAccuracy(IEnumerable<DataItem> subset, TinyNeuralNetwork network)
 {
-    int[] predictedNumbers = subset
+    var predictedNumbers = subset
         .Select(x => network.Predict(x.Input))
         .Select(f => f.Select((n, i) => (n, i)).Max().i)
         .ToArray();
 
-    int[] actualNumbers = subset
+    var actualNumbers = subset
         .Select(record => record.Output.Select((n, i) => (n, i)).Max().i)
         .ToArray();
 
-    double correctlyGuessed = predictedNumbers.Zip(actualNumbers, (l, r) => l == r ? 1.0 : 0.0).Sum();
-    double accuracy = correctlyGuessed / actualNumbers.Length;
-    return $"Achieved {accuracy:P2} accuracy.";
+    var correctlyGuessed = predictedNumbers.Zip(actualNumbers, (l, r) => l == r ? 1.0 : 0.0).Sum();
+    var accuracy = correctlyGuessed / actualNumbers.Length;
+    return accuracy;
 }
+
+record struct DataItem(float[] Input, float[] Output);

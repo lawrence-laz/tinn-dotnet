@@ -1,28 +1,25 @@
-﻿using AutoFixture.Xunit2;
-using FluentAssertions;
-using Xunit;
+﻿using FluentAssertions;
 
-namespace Tinn.Tests
+namespace Tinn.Tests;
+
+public class SaveAndLoadTest
 {
-    public class SaveAndLoadTest
+    private const string FilePath = "network.tinn";
+
+    [Theory, AutoData]
+    public void I_should_be_able_to_save_and_load_a_pre_trained_neural_network(
+        int inputCount,
+        int hiddenCount,
+        int outputCount)
     {
-        private const string _filePath = "network.tinn";
+        // Arrange
+        var originalNetwork = new TinyNeuralNetwork(inputCount, hiddenCount, outputCount);
 
-        [Theory, AutoData]
-        public void I_should_be_able_to_save_and_load_a_pretrained_neural_network(
-            int inputCount, 
-            int hiddenCount, 
-            int outputCount)
-        {
-            // Arrange
-            var originalNetwork = new TinyNeuralNetwork(inputCount, hiddenCount, outputCount);
+        // Act
+        originalNetwork.Save(FilePath);
+        var loadedNetwork = TinyNeuralNetwork.Load(FilePath);
 
-            // Act
-            originalNetwork.Save(_filePath);
-            var loadedNetwork = TinyNeuralNetwork.Load(_filePath);
-
-            // Assert
-            loadedNetwork.Should().BeEquivalentTo(originalNetwork);
-        }
+        // Assert
+        loadedNetwork.Should().BeEquivalentTo(originalNetwork);
     }
 }

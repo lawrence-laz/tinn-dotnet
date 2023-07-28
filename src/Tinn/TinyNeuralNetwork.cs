@@ -7,51 +7,91 @@ namespace Tinn;
 /// </summary>
 public class TinyNeuralNetwork
 {
-    internal float[] _weights;
-    internal float[] _biases;
-    internal float[] _hiddenLayer;
-    internal float[] _outputLayer;
-    internal int _inputCount;
-    internal Random _random;
+    internal float[] Weights;
+    internal float[] Biases;
+    internal float[] HiddenLayer;
+    internal float[] OutputLayer;
+    internal int InputCount;
+    internal Random Random;
 
     /// <summary>
     /// Creates an instance of an untrained neural network.
     /// </summary>
     /// <param name="inputCount">Number of inputs or features.</param>
-    /// <param name="hiddentCount">Number of hidden neurons in a hidden layer.</param>
+    /// <param name="hiddenCount">Number of hidden neurons in a hidden layer.</param>
     /// <param name="outputCount">Number of outputs or classes.</param>
     /// <param name="seed">A seed for random generator to produce predictable results.</param>
-    public TinyNeuralNetwork(int inputCount, int hiddentCount, int outputCount, int seed = default)
+    public TinyNeuralNetwork(
+        int inputCount,
+        int hiddenCount,
+        int outputCount,
+        int seed)
     {
-        _random = new Random(seed);
-        _inputCount = inputCount;
-        _weights = Enumerable.Range(0, hiddentCount * (inputCount + outputCount)).Select(_ => (float)_random.NextDouble() - 0.5f).ToArray();
-        _biases = Enumerable.Range(0, 2).Select(_ => (float)_random.NextDouble() - 0.5f).ToArray(); // Tinn only supports one hidden layer so there are two biases.
-        _hiddenLayer = new float[hiddentCount];
-        _outputLayer = new float[outputCount];
-    }
-
-    private TinyNeuralNetwork(float[] weights, float[] biases, float[] hiddenLayer, float[] outputLayer, int inputCount, int seed)
-    {
-        _weights = weights;
-        _biases = biases;
-        _hiddenLayer = hiddenLayer;
-        _outputLayer = outputLayer;
-        _inputCount = inputCount;
-        _random = new Random(seed);
+        Random = new Random(seed);
+        InputCount = inputCount;
+        Weights = Enumerable
+            .Range(0, hiddenCount * (inputCount + outputCount))
+            .Select(_ => (float)Random.NextDouble() - 0.5f)
+            .ToArray();
+        Biases = Enumerable
+            .Range(0, 2)
+            .Select(_ => (float)Random.NextDouble() - 0.5f)
+            .ToArray(); // Tinn only supports one hidden layer so there are two biases.
+        HiddenLayer = new float[hiddenCount];
+        OutputLayer = new float[outputCount];
     }
 
     /// <summary>
-    /// Loads a pretrained neural network from a `*.tinn` file.
+    /// Creates an instance of an untrained neural network.
+    /// </summary>
+    /// <param name="inputCount">Number of inputs or features.</param>
+    /// <param name="hiddenCount">Number of hidden neurons in a hidden layer.</param>
+    /// <param name="outputCount">Number of outputs or classes.</param>
+    public TinyNeuralNetwork(
+        int inputCount,
+        int hiddenCount,
+        int outputCount) : this(inputCount, hiddenCount, outputCount, seed: default)
+    {
+    }
+
+    private TinyNeuralNetwork(
+        float[] weights,
+        float[] biases,
+        float[] hiddenLayer,
+        float[] outputLayer,
+        int inputCount,
+        int seed)
+    {
+        Weights = weights;
+        Biases = biases;
+        HiddenLayer = hiddenLayer;
+        OutputLayer = outputLayer;
+        InputCount = inputCount;
+        Random = new Random(seed);
+    }
+
+
+    /// <summary>
+    /// Loads a pre-trained neural network from a `*.tinn` file.
+    /// </summary>
+    /// <param name="path">An absolute or a relative path to the `*.tinn` file.</param>
+    /// <returns>An instance of a pre-trained <see cref="TinyNeuralNetwork"/>.</returns>
+    public static TinyNeuralNetwork Load(string path)
+    {
+        return Load(path, seed: default);
+    }
+
+    /// <summary>
+    /// Loads a pre-trained neural network from a `*.tinn` file.
     /// </summary>
     /// <param name="path">An absolute or a relative path to the `*.tinn` file.</param>
     /// <param name="seed">A seed for random generator to produce predictable results.</param>
-    /// <returns>An instance of a pretrained <see cref="TinyNeuralNetwork"/>.</returns>
-    public static TinyNeuralNetwork Load(string path, int seed = default)
+    /// <returns>An instance of a pre-trained <see cref="TinyNeuralNetwork"/>.</returns>
+    public static TinyNeuralNetwork Load(string path, int seed)
     {
-        using StreamReader reader = new(path);
-        string metaData = ReadLine();
-        var counts = metaData.Split(' ').Select(int.Parse).ToArray();
+        using var reader = new StreamReader(path);
+        var metaData = ReadLine();
+        var counts = metaData.Split(' ').Select(int.Parse).ToList();
         var inputCount = counts[0];
         var hiddenCount = counts[1];
         var outputCount = counts[2];
@@ -61,22 +101,23 @@ public class TinyNeuralNetwork
         var hiddenLayer = new float[hiddenCount];
         var outputLayer = new float[outputCount];
         var biasCount = 2;
+
         for (var i = 0; i < biasCount; i++)
         {
             biases[i] = float.Parse(ReadLine(), CultureInfo.InvariantCulture);
         }
 
-        for (int i = 0; i < weights.Length; i++)
+        for (var i = 0; i < weights.Length; i++)
         {
             weights[i] = float.Parse(ReadLine(), CultureInfo.InvariantCulture);
         }
 
-        TinyNeuralNetwork network = new(weights, biases, hiddenLayer, outputLayer, inputCount, seed);
+        var network = new TinyNeuralNetwork(weights, biases, hiddenLayer, outputLayer, inputCount, seed);
         return network;
 
         string ReadLine()
         {
-            return reader.ReadLine() ?? throw new Exception("invalid file");
+            return reader.ReadLine() ?? throw new ArgumentException($"Corrupted file '{path ?? ""}', missing data.");
         }
     }
 
@@ -88,7 +129,7 @@ public class TinyNeuralNetwork
     public float[] Predict(float[] input)
     {
         PropagateForward(input);
-        return _outputLayer;
+        return OutputLayer;
     }
 
     /// <summary>
@@ -109,13 +150,18 @@ public class TinyNeuralNetwork
     /// <param name="path">An absolute or a relative path to the `*.tinn` file.</param>
     public void Save(string path)
     {
-        using StreamWriter writer = new FormattingStreamWriter(path, CultureInfo.InvariantCulture);
-        writer.WriteLine($"{_inputCount} {_hiddenLayer.Length} {_outputLayer.Length}");
-        foreach (float bias in _biases)
-            writer.WriteLine(bias);
+        using var writer = new FormattingStreamWriter(path, CultureInfo.InvariantCulture);
+        writer.WriteLine($"{InputCount} {HiddenLayer.Length} {OutputLayer.Length}");
 
-        foreach (float weight in _weights)
+        foreach (var bias in Biases)
+        {
+            writer.WriteLine(bias);
+        }
+
+        foreach (var weight in Weights)
+        {
             writer.WriteLine(weight);
+        }
     }
 
     /// <summary>
@@ -125,54 +171,59 @@ public class TinyNeuralNetwork
     /// <returns>Aggregated error value indicating how far off the neural network is on the training data set.</returns>
     public float GetTotalError(float[] expectedOutput)
     {
-        return GetTotalError(expectedOutput, _outputLayer);
+        return GetTotalError(expectedOutput, OutputLayer);
     }
 
     private void PropagateForward(float[] input)
     {
         // Calculate hidden layer neuron values.
-        for (var i = 0; i < _hiddenLayer.Length; i++)
+        for (var i = 0; i < HiddenLayer.Length; i++)
         {
             var sum = 0.0f;
-            for (var j = 0; j < _inputCount; j++)
-                sum += input[j] * _weights[i * _inputCount + j];
+            for (var j = 0; j < InputCount; j++)
+            {
+                sum += input[j] * Weights[i * InputCount + j];
+            }
 
-            _hiddenLayer[i] = ActivationFunction(sum + _biases[0]);
+            HiddenLayer[i] = ActivationFunction(sum + Biases[0]);
         }
 
         // Calculate output layer neuron values.
-        for (int i = 0; i < _outputLayer.Length; i++)
+        for (var i = 0; i < OutputLayer.Length; i++)
         {
             var sum = 0.0f;
 
-            for (int j = 0; j < _hiddenLayer.Length; j++)
-                sum += _hiddenLayer[j] * _weights[(_hiddenLayer.Length * _inputCount) + i * _hiddenLayer.Length + j];
+            for (var j = 0; j < HiddenLayer.Length; j++)
+            {
+                sum += HiddenLayer[j] * Weights[(HiddenLayer.Length * InputCount) + i * HiddenLayer.Length + j];
+            }
 
-            _outputLayer[i] = ActivationFunction(sum + _biases[1]);
+            OutputLayer[i] = ActivationFunction(sum + Biases[1]);
         }
     }
 
     private void PropagateBackward(float[] input, float[] expectedOutput, float learningRate)
     {
-        for (var i = 0; i < _hiddenLayer.Length; i++)
+        for (var i = 0; i < HiddenLayer.Length; i++)
         {
             var sum = 0.0f;
 
             // Calculate total error change with respect to output.
-            for (var j = 0; j < _outputLayer.Length; j++)
+            for (var j = 0; j < OutputLayer.Length; j++)
             {
-                float a = LossFunctionPartialDerivative(_outputLayer[j], expectedOutput[j]);
-                float b = ActivationFunctionPartialDerivative(_outputLayer[j]);
-                sum += a * b * _weights[(_hiddenLayer.Length * _inputCount) + j * _hiddenLayer.Length + i];
+                var a = LossFunctionPartialDerivative(expectedOutput[j], OutputLayer[j]);
+                var b = ActivationFunctionPartialDerivative(OutputLayer[j]);
+                var weightIndex = (HiddenLayer.Length * InputCount) + j * HiddenLayer.Length + i;
+                sum += a * b * Weights[weightIndex];
 
                 // Correct weights in hidden to output layer.
-                _weights[(_hiddenLayer.Length * _inputCount) + j * _hiddenLayer.Length + i] -= learningRate * a * b * _hiddenLayer[i];
+                Weights[weightIndex] -= learningRate * a * b * HiddenLayer[i];
             }
 
             // Correct weights in input to hidden layer.
-            for (int j = 0; j < _inputCount; j++)
+            for (var j = 0; j < InputCount; j++)
             {
-                _weights[i * _inputCount + j] -= learningRate * sum * ActivationFunctionPartialDerivative(_hiddenLayer[i]) * input[j];
+                Weights[i * InputCount + j] -= learningRate * sum * ActivationFunctionPartialDerivative(HiddenLayer[i]) * input[j];
             }
         }
     }
@@ -192,14 +243,15 @@ public class TinyNeuralNetwork
         return 0.5f * (expected - actual) * (expected - actual);
     }
 
-    private static float LossFunctionPartialDerivative(float actual, float expected)
+    // Partial derivative of loss function with respect to the actual output.
+    private static float LossFunctionPartialDerivative(float expected, float actual)
     {
         return actual - expected;
     }
 
     private static float GetTotalError(float[] expected, float[] actual)
     {
-        float totalError = expected.Zip(actual, (e, a) => LossFunction(e, a)).Sum();
+        var totalError = expected.Zip(actual, LossFunction).Sum();
         return totalError;
     }
 
