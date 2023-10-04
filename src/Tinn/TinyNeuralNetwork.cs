@@ -7,8 +7,6 @@ namespace Tinn;
 /// </summary>
 public class TinyNeuralNetwork
 {
-    internal float[] Weights;
-    internal float[] Biases;
     internal float[] HiddenLayer;
     internal float[] OutputLayer;
     internal int InputCount;
@@ -25,7 +23,7 @@ public class TinyNeuralNetwork
         int inputCount,
         int hiddenCount,
         int outputCount,
-        int seed)
+        int seed = default)
     {
         Random = new Random(seed);
         InputCount = inputCount;
@@ -42,15 +40,19 @@ public class TinyNeuralNetwork
     }
 
     /// <summary>
-    /// Creates an instance of an untrained neural network.
+    /// Creates an instance of a pre-trained neural network.
     /// </summary>
+    /// <param name="weights">Weights of the neural network.</param>
+    /// <param name="biases">Biases of the neural network.</param>
     /// <param name="inputCount">Number of inputs or features.</param>
     /// <param name="hiddenCount">Number of hidden neurons in a hidden layer.</param>
     /// <param name="outputCount">Number of outputs or classes.</param>
     public TinyNeuralNetwork(
+        float[] weights,
+        float[] biases,
         int inputCount,
         int hiddenCount,
-        int outputCount) : this(inputCount, hiddenCount, outputCount, seed: default)
+        int outputCount) : this(weights, biases, new float[hiddenCount], new float[outputCount], inputCount, default)
     {
     }
 
@@ -70,6 +72,15 @@ public class TinyNeuralNetwork
         Random = new Random(seed);
     }
 
+    /// <summary>
+    /// Gets the weights of the neural network.
+    /// </summary>
+    public float[] Weights { get; }
+
+    /// <summary>
+    /// Gets the biases of the neural network.
+    /// </summary>
+    public float[] Biases { get; }
 
     /// <summary>
     /// Loads a pre-trained neural network from a `*.tinn` file.
