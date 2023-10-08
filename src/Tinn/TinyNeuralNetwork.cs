@@ -23,7 +23,7 @@ public class TinyNeuralNetwork
         int inputCount,
         int hiddenCount,
         int outputCount,
-        int seed = default)
+        int seed)
     {
         Random = new Random(seed);
         InputCount = inputCount;
@@ -40,6 +40,19 @@ public class TinyNeuralNetwork
     }
 
     /// <summary>
+    /// Creates an instance of an untrained neural network.
+    /// </summary>
+    /// <param name="inputCount">Number of inputs or features.</param>
+    /// <param name="hiddenCount">Number of hidden neurons in a hidden layer.</param>
+    /// <param name="outputCount">Number of outputs or classes.</param>
+    public TinyNeuralNetwork(
+        int inputCount,
+        int hiddenCount,
+        int outputCount) : this(inputCount, hiddenCount, outputCount, seed: default)
+    {
+    }
+
+    /// <summary>
     /// Creates an instance of a pre-trained neural network.
     /// </summary>
     /// <param name="weights">Weights of the neural network.</param>
@@ -52,7 +65,7 @@ public class TinyNeuralNetwork
         float[] biases,
         int inputCount,
         int hiddenCount,
-        int outputCount) : this(weights, biases, new float[hiddenCount], new float[outputCount], inputCount, default)
+        int outputCount) : this(weights, biases, new float[hiddenCount], new float[outputCount], inputCount, seed: default)
     {
     }
 
